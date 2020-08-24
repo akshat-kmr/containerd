@@ -14,20 +14,31 @@
    limitations under the License.
 */
 
-package stdio
+package runtime
 
 import (
-	"context"
-	"sync"
-
-	"github.com/containerd/console"
+	"net/url"
+	"os/exec"
 )
 
-// Platform handles platform-specific behavior that may differs across
-// platform implementations
-type Platform interface {
-	CopyConsole(ctx context.Context, console console.Console, id, stdin, stdout, stderr string,
-		wg *sync.WaitGroup) (console.Console, error)
-	ShutdownConsole(ctx context.Context, console console.Console) error
-	Close() error
+// NewBinaryCmd returns a Cmd to be used to start a logging binary.
+// The Cmd is generated from the provided uri, and the container ID and
+// namespace are appended to the Cmd environment.
+func NewBinaryCmd(binaryURI *url.URL, id, ns string) *exec.Cmd {
+	var args []string
+	for k, vs := range binaryURI.Query() {
+		args = append(args, k)
+		if len(vs) > 0 {
+			args = append(args, vs[0])
+		}
+	}
+
+	cmd := exec.Command(binaryURI.Path, args...)
+
+	cmd.Env = append(cmd.Env,
+		"CONTAINER_ID="+id,
+		"CONTAINER_NAMESPACE="+ns,
+	)
+
+	return cmd
 }
