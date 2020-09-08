@@ -117,6 +117,8 @@ func (p *Init) Create(ctx context.Context, r *CreateConfig) error {
 		pidFile = newPidFile(p.Bundle)
 	)
 
+	return errors.New("aborting create")
+
 	if r.Terminal {
 		if socket, err = runc.NewTempConsoleSocket(); err != nil {
 			return errors.Wrap(err, "failed to create OCI runtime console socket")
